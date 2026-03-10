@@ -1,644 +1,235 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>持久化CSV收集器 · 根目录存储</title>
+    <title>GitHub CSV 收集器</title>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        body {
-            background: #edf4fa;
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .card {
-            max-width: 950px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 40px;
-            box-shadow: 0 30px 50px -20px #1f3e55;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            padding: 30px 35px;
-        }
-        h1 {
-            font-weight: 600;
-            font-size: 2.2rem;
-            margin: 0 0 5px 0;
-            color: #0d3445;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .badge {
-            background: #226f8f;
-            color: white;
-            font-size: 0.8rem;
-            font-weight: 500;
-            padding: 4px 16px;
-            border-radius: 60px;
-            letter-spacing: 0.3px;
-        }
-        .sub {
-            color: #2f5a70;
-            margin: 0 0 25px 0;
-            font-size: 1rem;
-            border-left: 5px solid #58a6c7;
-            padding-left: 18px;
-            background: #daeefb70;
-            border-radius: 0 30px 30px 0;
-            line-height: 1.5;
-        }
-        .sub code {
-            background: #1b4759;
-            color: #e1f0fa;
-            padding: 3px 10px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-        }
-        .grid-container {
-            display: flex;
-            flex-direction: column;
-            gap: 28px;
-        }
-        /* 表单区域 */
-        .form-panel {
-            background: #ffffffde;
-            border-radius: 30px;
-            padding: 24px 28px;
-            border: 1px solid #cbe1ef;
-            box-shadow: 0 12px 20px -18px #214b60;
-        }
-        .input-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 18px;
-            margin-bottom: 22px;
-        }
-        .field {
-            flex: 1 1 180px;
-        }
-        .field label {
-            display: block;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: #146a8f;
-            margin-bottom: 5px;
-        }
-        .field input {
-            width: 100%;
-            padding: 13px 18px;
-            border: 1.5px solid #bfd9eb;
-            border-radius: 30px;
-            font-size: 1rem;
-            background: white;
-            transition: 0.2s;
-            outline: none;
-        }
-        .field input:focus {
-            border-color: #1d86b1;
-            box-shadow: 0 0 0 4px #b7def58c;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .btn {
-            border: none;
-            background: white;
-            padding: 12px 30px;
-            border-radius: 60px;
-            font-weight: 550;
-            font-size: 0.95rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            box-shadow: 0 6px 14px rgba(23, 65, 90, 0.12);
-            transition: 0.12s;
-            border: 1px solid transparent;
-        }
-        .btn-primary {
-            background: #186f90;
-            color: white;
-            box-shadow: 0 10px 18px -8px #15536b;
-        }
-        .btn-primary:hover {
-            background: #2387ac;
-            transform: scale(1.02);
-        }
-        .btn-secondary {
-            background: #e8f1f9;
-            color: #114f68;
-            border: 1px solid #b0d2e9;
-        }
-        .btn-secondary:hover {
-            background: #d6e8f5;
-        }
-        .btn-warning {
-            background: #ffe8d9;
-            color: #9b561c;
-            border: 1px solid #f3bc8f;
-        }
-        .btn-warning:hover {
-            background: #ffdbbd;
-        }
-        /* 表格区 */
-        .db-panel {
-            background: #ffffffd9;
-            border-radius: 28px;
-            padding: 10px 12px 16px 12px;
-            border: 1px solid #b7d3e8;
-        }
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            padding: 12px 20px 8px 20px;
-        }
-        .table-header h2 {
-            margin: 0;
-            font-weight: 540;
-            color: #154c61;
-            font-size: 1.6rem;
-        }
-        .csv-indicator {
-            background: #b7dae9;
-            padding: 5px 18px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-            color: #072f40;
-            font-weight: 500;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 20px;
-            background: #ffffff;
-            margin: 10px 5px 5px 5px;
-            border: 1px solid #caddf0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-            min-width: 450px;
-        }
-        th {
-            background: #deecf5;
-            color: #06384b;
-            font-weight: 600;
-            padding: 15px 12px;
-            border-bottom: 2px solid #aacae2;
-        }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #d3e4f0;
-            color: #174f67;
-        }
-        .empty-row td {
-            padding: 40px;
-            text-align: center;
-            color: #5a839b;
-            font-style: italic;
-            background: #f9fdff;
-        }
-        .footer-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px 6px 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        .file-hint {
-            background: #eef5fa;
-            border-radius: 60px;
-            padding: 6px 20px;
-            font-size: 0.85rem;
-            border: 1px dashed #6199b5;
-            color: #0d4c67;
-        }
-        .file-hint strong {
-            background: #174c61;
-            color: white;
-            padding: 2px 10px;
-            border-radius: 60px;
-            margin-right: 6px;
-            font-weight: 500;
-        }
-        .small-icon-btn {
-            background: none;
-            border: 1px solid #b3cbd8;
-            padding: 7px 18px;
-            border-radius: 40px;
-            color: #105167;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .small-icon-btn:hover {
-            background: #d5e8f3;
-            border-color: #4783a5;
-        }
-        .danger-clear {
-            background: none;
-            border: none;
-            color: #b05555;
-            text-decoration: underline dotted;
-            cursor: pointer;
-            font-size: 0.85rem;
-            padding: 8px 12px;
-            opacity: 0.75;
-        }
-        .danger-clear:hover {
-            opacity: 1;
-            color: #c33535;
-        }
+        body { font-family: system-ui; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+        .success { background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; }
+        .error { background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0; }
+        input, button { padding: 10px; margin: 5px; border-radius: 5px; }
+        button { background: #1d86b1; color: white; border: none; cursor: pointer; }
+        button:hover { background: #156a8f; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f2f2f2; }
     </style>
 </head>
 <body>
-<div class="card">
-    <h1>
-        📁 根目录 CSV 收集器
-        <span class="badge">持久化存储</span>
-    </h1>
-    <div class="sub">
-        <span>📂 数据保存在 <code>/data.csv</code> （网站根目录） • 下次打开自动导入</span>
+    <h1>📁 GitHub CSV 存储</h1>
+    
+    <div class="warning">
+        <strong>⚠️ 安全提醒：</strong> 请使用新生成的 token，不要分享给别人。格式应为 <code>ghp_xxxxxxxxxxxx</code>
     </div>
-
-    <div class="grid-container">
-        <!-- 表单区块 -->
-        <div class="form-panel">
-            <div class="input-row">
-                <div class="field">
-                    <label>👤 姓名</label>
-                    <input type="text" id="nameField" placeholder="例如：李华" autocomplete="off">
-                </div>
-                <div class="field">
-                    <label>🔢 年龄</label>
-                    <input type="number" id="ageField" placeholder="18-99" min="1" max="120">
-                </div>
-                <div class="field">
-                    <label>📧 邮箱</label>
-                    <input type="email" id="emailField" placeholder="name@domain.com" autocomplete="off">
-                </div>
-            </div>
-            <div class="action-buttons">
-                <button class="btn btn-primary" id="saveBtn">💾 保存到根目录 data.csv</button>
-                <button class="btn btn-secondary" id="exampleBtn">📋 填入示例</button>
-                <button class="btn btn-warning" id="reloadBtn">🔄 从文件重新加载</button>
-            </div>
-        </div>
-
-        <!-- 数据库表格预览 -->
-        <div class="db-panel">
-            <div class="table-header">
-                <h2>📋 当前数据 <span class="csv-indicator" id="rowCounter">0 条</span></h2>
-                <div>
-                    <button class="small-icon-btn" id="downloadBtn">📥 下载 data.csv</button>
-                </div>
-            </div>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr><th>姓名</th><th>年龄</th><th>邮箱</th></tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr class="empty-row"><td colspan="3">⏳ 正在从 /data.csv 加载数据…</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="footer-bar">
-                <span class="file-hint"><strong>data.csv</strong> 根目录持久化</span>
-                <button class="danger-clear" id="clearBtn">🧹 清空全部 (并更新文件)</button>
-            </div>
-        </div>
+    
+    <div style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
+        <h3>🔑 GitHub 配置</h3>
+        <input type="password" id="token" placeholder="GitHub Token (ghp_...)" style="width: 300px">
+        <input type="text" id="owner" placeholder="仓库所有者" value="your-username">
+        <input type="text" id="repo" placeholder="仓库名称" value="your-repo">
+        <input type="text" id="branch" placeholder="分支" value="main">
     </div>
-
-    <!-- 状态提示条 (轻提示) -->
-    <div style="margin-top: 18px; font-size:0.85rem; color:#226582; display:flex; gap:14px; justify-content:flex-end; background: #e8f2fa60; padding:8px 20px; border-radius: 60px;">
-        <span>✅ 添加记录自动保存到根目录 data.csv</span>
-        <span>♻️ 刷新页面自动从文件恢复</span>
+    
+    <div style="margin: 20px 0;">
+        <h3>📝 添加数据</h3>
+        <input type="text" id="name" placeholder="姓名">
+        <input type="number" id="age" placeholder="年龄">
+        <input type="email" id="email" placeholder="邮箱">
+        <button onclick="addAndSave()">保存到 GitHub</button>
+        <button onclick="loadFromGitHub()" style="background: #6c757d;">从 GitHub 加载</button>
     </div>
-</div>
-
-<script>
-    (function() {
-        // ---------- 内存数据 ----------
-        let localRecords = [];
-
-        // DOM 元素
-        const nameInp = document.getElementById('nameField');
-        const ageInp = document.getElementById('ageField');
-        const emailInp = document.getElementById('emailField');
-        const saveBtn = document.getElementById('saveBtn');
-        const exampleBtn = document.getElementById('exampleBtn');
-        const reloadBtn = document.getElementById('reloadBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const tbody = document.getElementById('tableBody');
-        const rowCounter = document.getElementById('rowCounter');
-
-        // ---------- 工具函数 ----------
-        function updateTableAndCounter() {
-            // 更新表格
-            if (!localRecords.length) {
-                tbody.innerHTML = `<tr class="empty-row"><td colspan="3">📭 暂无数据，请添加记录或从文件重新加载</td></tr>`;
-                rowCounter.innerText = '0 条';
-                return;
-            }
-
-            let html = '';
-            localRecords.forEach(rec => {
-                const name = escapeHtml(rec.name || '');
-                const age = escapeHtml(rec.age || '');
-                const email = escapeHtml(rec.email || '');
-                html += `<tr><td>${name}</td><td>${age}</td><td>${email}</td></tr>`;
-            });
-            tbody.innerHTML = html;
-            rowCounter.innerText = localRecords.length + ' 条';
+    
+    <div id="status"></div>
+    
+    <h3>📊 当前数据</h3>
+    <table id="dataTable">
+        <thead>
+            <tr><th>姓名</th><th>年龄</th><th>邮箱</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+    
+    <script>
+    let records = [];
+    
+    async function saveToGitHub() {
+        const token = document.getElementById('token').value;
+        const owner = document.getElementById('owner').value;
+        const repo = document.getElementById('repo').value;
+        const branch = document.getElementById('branch').value;
+        
+        if (!token || !owner || !repo) {
+            showStatus('请填写所有 GitHub 配置', 'error');
+            return false;
         }
-
-        function escapeHtml(unsafe) {
-            if (!unsafe && unsafe !== 0) return '';
-            return String(unsafe)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+        
+        // 验证 token 格式
+        if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+            showStatus('Token 格式不正确，应该以 ghp_ 或 github_pat_ 开头', 'error');
+            return false;
         }
-
-        // 校验输入
-        function isValid(name, age, email) {
-            if (!name || name.trim() === '') return false;
-            const ageNum = parseInt(age, 10);
-            if (isNaN(ageNum) || ageNum < 1 || ageNum > 120) return false;
-            if (!email || !email.includes('@') || !email.includes('.') || email.trim() === '') return false;
-            return true;
-        }
-
-        function getInputs() {
-            return {
-                name: nameInp.value.trim(),
-                age: ageInp.value.trim(),
-                email: emailInp.value.trim()
-            };
-        }
-
-        function clearInputs() {
-            nameInp.value = '';
-            ageInp.value = '';
-            emailInp.value = '';
-        }
-
-        // ---------- CSV 读写 (根目录 /data.csv) ----------
-        const CSV_PATH = 'data.csv';  // 相对根目录
-
-        // 将当前内存数据保存到 data.csv (PUT 覆盖)
-        async function saveToFile() {
-            if (localRecords.length === 0) {
-                // 如果没数据，我们也可以生成一个空文件（仅表头），但为符合直觉，弹提醒
-                if (!confirm('当前没有数据，保存会生成一个只有表头的空CSV文件。继续？')) {
-                    return false;
-                }
-            }
-
-            // 生成CSV内容 (包含表头)
-            const headers = ['姓名', '年龄', '邮箱'];
-            let csvContent = headers.map(h => `"${h}"`).join(',') + '\n';
-
-            localRecords.forEach(rec => {
-                const row = [
-                    formatCSVField(rec.name || ''),
-                    formatCSVField(rec.age || ''),
-                    formatCSVField(rec.email || '')
-                ];
-                csvContent += row.join(',') + '\n';
-            });
-
-            // 加BOM优化Excel
-            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-
-            // 使用 FileSystem API 写入根目录？ 浏览器安全限制无法直接写任意文件。
-            // 替代方案：触发下载，并提示用户手动放在根目录。但题目要求“保存在根目录文件下，下次打开自动导入”
-            // 真正的“保存在根目录” 在纯浏览器环境中无法实现 (沙箱)
-            // 但我们可以用 localStorage 模拟“根目录存储”？ 题目更贴近本地文件模拟，但既然指定“根目录文件”，
-            // 我们可以采用 “模拟但真实下载” 并利用 localStorage 保存一份副本以便下次加载。
-            // 最符合现实的解释：使用 localStorage 来模拟持久化，同时提供下载到根目录的功能让用户自行放置。
-            // 为了满足“保存在根目录文件下”且“下次打开自动导入”，我们采用 localStorage 存储文件内容，并命名为 data.csv 的虚拟映像。
-            // 同时提供下载，用户可以手动保存到根目录。下次加载时优先从localStorage读取，达到“自动导入”。
-            // 这是最贴近需求且可实现的方案。
-
-            // 我们将CSV内容保存到 localStorage 中, key: 'root_csv_data'
+        
+        showStatus('正在保存到 GitHub...', 'warning');
+        
+        try {
+            // 生成 CSV
+            const csv = generateCSV(records);
+            const content = btoa(unescape(encodeURIComponent(csv)));
+            
+            // 获取当前文件信息
+            const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data.csv?ref=${branch}`;
+            let sha = null;
+            
             try {
-                localStorage.setItem('root_csv_data', csvContent);
-                // 同时也保存一份元数据，标识更新时间
-                localStorage.setItem('root_csv_last', Date.now().toString());
-
-                // 可选: 显示提示
-                showToast('数据已存入虚拟根目录 (localStorage)，并已准备好下载');
-                return true;
-            } catch (e) {
-                alert('存储失败: ' + e);
-                return false;
-            }
-        }
-
-        // 从 localStorage 加载虚拟根目录 data.csv
-        async function loadFromFile() {
-            const storedCsv = localStorage.getItem('root_csv_data');
-            if (!storedCsv) {
-                // 没有任何存储，清空内存
-                localRecords = [];
-                updateTableAndCounter();
-                showToast('没有找到已保存的 data.csv，请先添加数据');
-                return;
-            }
-
-            // 解析CSV (极简解析，注意带表头)
-            const parsed = parseCSV(storedCsv);
-            if (parsed.length <= 1) {
-                // 只有表头或空
-                localRecords = [];
-            } else {
-                // 去掉表头行，剩下数据
-                localRecords = parsed.slice(1).map(row => ({
-                    name: row[0] || '',
-                    age: row[1] || '',
-                    email: row[2] || ''
-                }));
-            }
-            updateTableAndCounter();
-            showToast(`从虚拟根目录加载了 ${localRecords.length} 条记录`);
-        }
-
-        // 极简CSV解析 (只处理双引号基本情况, 不处理复杂换行)
-        function parseCSV(text) {
-            const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-            const result = [];
-            for (let line of lines) {
-                // 非常简单的分割：按逗号，并移除首尾双引号
-                const fields = [];
-                let current = '';
-                let inQuote = false;
-                for (let i = 0; i < line.length; i++) {
-                    const ch = line[i];
-                    if (ch === '"') {
-                        inQuote = !inQuote;
-                    } else if (ch === ',' && !inQuote) {
-                        fields.push(current.replace(/^"|"$/g, '').replace(/""/g, '"'));
-                        current = '';
-                    } else {
-                        current += ch;
-                    }
+                const getRes = await fetch(fileUrl, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                if (getRes.ok) {
+                    const fileData = await getRes.json();
+                    sha = fileData.sha;
                 }
-                fields.push(current.replace(/^"|"$/g, '').replace(/""/g, '"'));
-                result.push(fields);
-            }
-            return result;
-        }
-
-        function formatCSVField(field) {
-            let str = field || '';
-            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                str = str.replace(/"/g, '""');
-                return `"${str}"`;
-            }
-            return `"${str}"`;  // 统一加引号
-        }
-
-        // 简易toast
-        function showToast(msg) {
-            // 简单用 alert 或者 console，但可以用更友好的方式
-            // 这里用 alert 暂时替代（但多次弹窗不好）采用console+状态变化
-            console.log('[CSV]', msg);
-            // 也可以改变某个dom，但为了简洁，用小提示显示在右下角？ 简单起见 alert
-            // 为了避免烦扰，只alert重要操作
-        }
-
-        // 保存并更新文件 (保存到localStorage虚拟根目录)
-        async function saveAndRefresh() {
-            const { name, age, email } = getInputs();
-            if (!isValid(name, age, email)) {
-                alert('请填写有效信息：非空姓名，1-120数字年龄，有效邮箱');
-                return;
-            }
-
-            // 添加到内存
-            localRecords.push({ name, age, email });
-            // 更新UI
-            updateTableAndCounter();
-            // 清空输入
-            clearInputs();
-            // 保存到文件 (虚拟根目录)
-            await saveToFile();  // 内部使用localStorage
-        }
-
-        // 清空所有 (内存 + 文件)
-        async function clearAll() {
-            if (localRecords.length === 0 && !localStorage.getItem('root_csv_data')) {
-                return;
-            }
-            if (confirm('确定要清空所有数据并更新 data.csv 吗？')) {
-                localRecords = [];
-                updateTableAndCounter();
-                // 移除localStorage中的文件，或者写入空表头文件
-                const emptyCsv = '"姓名","年龄","邮箱"\n';
-                localStorage.setItem('root_csv_data', emptyCsv);
-                showToast('已清空，虚拟根目录 data.csv 只剩表头');
-            }
-        }
-
-        // 下载真正的 data.csv 文件 (由用户手动放置根目录)
-        function downloadCsvFile() {
-            let csv = localStorage.getItem('root_csv_data');
-            if (!csv) {
-                // 如果还没有，生成表头
-                csv = '"姓名","年龄","邮箱"\n';
-            }
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'data.csv';
-            a.click();
-            URL.revokeObjectURL(a.href);
-        }
-
-        // 填入示例
-        function fillExample() {
-            const samples = [
-                { name: '张明', age: '29', email: 'ming.zhang@work.com' },
-                { name: '陈丽', age: '34', email: 'li.chen@company.cn' },
-                { name: '王磊', age: '42', email: 'wanglei@test.org' },
-                { name: '赵芳', age: '27', email: 'fang.zhao@school.edu' }
-            ];
-            const r = samples[Math.floor(Math.random() * samples.length)];
-            nameInp.value = r.name;
-            ageInp.value = r.age;
-            emailInp.value = r.email;
-        }
-
-        // ---------- 事件绑定 ----------
-        saveBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            saveAndRefresh();
-        });
-
-        exampleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            fillExample();
-        });
-
-        reloadBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await loadFromFile();
-        });
-
-        downloadBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            downloadCsvFile();
-        });
-
-        clearBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await clearAll();
-        });
-
-        // 页面加载时自动从虚拟根目录导入
-        window.addEventListener('load', () => {
-            loadFromFile().catch(console.error);
-        });
-
-        // 初始化
-        updateTableAndCounter();
-
-        // 键盘保存
-        [nameInp, ageInp, emailInp].forEach(inp => {
-            inp.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    saveAndRefresh();
-                }
+            } catch (e) {}
+            
+            // 上传文件
+            const uploadData = {
+                message: `更新数据 (${new Date().toLocaleString()})`,
+                content: content,
+                branch: branch
+            };
+            if (sha) uploadData.sha = sha;
+            
+            const putRes = await fetch(fileUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(uploadData)
             });
+            
+            if (!putRes.ok) {
+                const err = await putRes.json();
+                throw new Error(err.message);
+            }
+            
+            showStatus('✅ 成功保存到 GitHub！', 'success');
+            return true;
+            
+        } catch (error) {
+            showStatus(`❌ 保存失败: ${error.message}`, 'error');
+            console.error(error);
+            return false;
+        }
+    }
+    
+    async function loadFromGitHub() {
+        const token = document.getElementById('token').value;
+        const owner = document.getElementById('owner').value;
+        const repo = document.getElementById('repo').value;
+        const branch = document.getElementById('branch').value;
+        
+        try {
+            showStatus('正在从 GitHub 加载...', 'warning');
+            
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/data.csv?ref=${branch}`;
+            const res = await fetch(url, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            
+            if (!res.ok) {
+                if (res.status === 404) {
+                    records = [];
+                    updateTable();
+                    showStatus('文件不存在，将创建新文件', 'warning');
+                    return;
+                }
+                throw new Error(`HTTP ${res.status}`);
+            }
+            
+            const data = await res.json();
+            const content = decodeURIComponent(escape(atob(data.content)));
+            
+            // 解析 CSV
+            records = parseCSV(content);
+            updateTable();
+            showStatus(`✅ 成功加载 ${records.length} 条记录`, 'success');
+            
+        } catch (error) {
+            showStatus(`❌ 加载失败: ${error.message}`, 'error');
+        }
+    }
+    
+    function generateCSV(records) {
+        let csv = '姓名,年龄,邮箱\n';
+        records.forEach(r => {
+            csv += `"${r.name || ''}","${r.age || ''}","${r.email || ''}"\n`;
         });
-    })();
-</script>
+        return csv;
+    }
+    
+    function parseCSV(csv) {
+        const lines = csv.split('\n').filter(l => l.trim());
+        if (lines.length <= 1) return [];
+        
+        const records = [];
+        for (let i = 1; i < lines.length; i++) {
+            const fields = lines[i].split(',').map(f => 
+                f.replace(/^"|"$/g, '').trim()
+            );
+            if (fields.length >= 3) {
+                records.push({
+                    name: fields[0],
+                    age: fields[1],
+                    email: fields[2]
+                });
+            }
+        }
+        return records;
+    }
+    
+    function addAndSave() {
+        const name = document.getElementById('name').value.trim();
+        const age = document.getElementById('age').value.trim();
+        const email = document.getElementById('email').value.trim();
+        
+        if (!name || !age || !email) {
+            showStatus('请填写完整信息', 'error');
+            return;
+        }
+        
+        records.push({ name, age, email });
+        updateTable();
+        
+        // 清空输入
+        document.getElementById('name').value = '';
+        document.getElementById('age').value = '';
+        document.getElementById('email').value = '';
+        
+        // 自动保存到 GitHub
+        saveToGitHub();
+    }
+    
+    function updateTable() {
+        const tbody = document.getElementById('tableBody');
+        if (records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">暂无数据</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        records.forEach(r => {
+            html += `<tr><td>${r.name}</td><td>${r.age}</td><td>${r.email}</td></tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+    
+    function showStatus(msg, type) {
+        const div = document.getElementById('status');
+        div.className = type;
+        div.innerHTML = msg;
+        setTimeout(() => div.innerHTML = '', 5000);
+    }
+    </script>
 </body>
 </html>
