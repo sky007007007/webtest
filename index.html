@@ -1,181 +1,389 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GitHub CSV 收集器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub CSV 数据收集器 · 长期项目</title>
     <style>
-        body { font-family: system-ui; max-width: 800px; margin: 50px auto; padding: 20px; }
-        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
-        .success { background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; }
-        .error { background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0; }
-        input, button { padding: 10px; margin: 5px; border-radius: 5px; }
-        button { background: #1d86b1; color: white; border: none; cursor: pointer; }
-        button:hover { background: #156a8f; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f2f2f2; }
+        /* 样式保持简洁，重点在功能 */
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #f0f7fc;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,30,50,0.2);
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            margin: 0;
+            color: #0b3b4e;
+            font-size: 2rem;
+        }
+        .github-badge {
+            background: #24292e;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #1d5a7a;
+        }
+        .field input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d0e2f0;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+        .field input:focus {
+            outline: none;
+            border-color: #1d86b1;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #1d86b1;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #156a8f;
+        }
+        .btn-secondary {
+            background: #e9ecef;
+            color: #1a4b63;
+        }
+        .btn-secondary:hover {
+            background: #dde2e6;
+        }
+        .btn-github {
+            background: #24292e;
+            color: white;
+        }
+        .btn-github:hover {
+            background: #0f0f11;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid #cde0ea;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #d9eaf5;
+            padding: 15px;
+            text-align: left;
+            color: #0a3f55;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e1eef9;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .status.loading {
+            background: #e2f0fd;
+            color: #004085;
+            display: block;
+        }
+        .token-hint {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            border-left: 4px solid #1d86b1;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
-    <h1>📁 GitHub CSV 存储</h1>
-    
+<div class="container">
+    <div class="header">
+        <h1>📊 GitHub CSV 数据库</h1>
+        <span class="github-badge">
+            <svg height="20" viewBox="0 0 16 16" width="20"><path fill="white" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+            永久存储
+        </span>
+    </div>
+
     <div class="warning">
-        <strong>⚠️ 安全提醒：</strong> 请使用新生成的 token，不要分享给别人。格式应为 <code>ghp_xxxxxxxxxxxx</code>
+        ⚠️ 首次使用需要配置 GitHub Token。数据将保存在你的仓库中，长期有效！
     </div>
-    
-    <div style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
-        <h3>🔑 GitHub 配置</h3>
-        <input type="password" id="token" placeholder="GitHub Token (ghp_...)" style="width: 300px">
-        <input type="text" id="owner" placeholder="仓库所有者" value="your-username">
-        <input type="text" id="repo" placeholder="仓库名称" value="your-repo">
-        <input type="text" id="branch" placeholder="分支" value="main">
+
+    <!-- GitHub 配置区域 -->
+    <div class="token-hint">
+        <strong>🔧 配置步骤：</strong>
+        <ol style="margin: 10px 0 5px 20px;">
+            <li>在 <a href="https://github.com/settings/tokens" target="_blank">GitHub Token设置</a> 创建新token（勾选repo权限）</li>
+            <li>在下方填入token和仓库信息</li>
+            <li>数据会自动保存到仓库的 <code>data.csv</code> 文件中</li>
+        </ol>
     </div>
-    
-    <div style="margin: 20px 0;">
-        <h3>📝 添加数据</h3>
-        <input type="text" id="name" placeholder="姓名">
-        <input type="number" id="age" placeholder="年龄">
-        <input type="email" id="email" placeholder="邮箱">
-        <button onclick="addAndSave()">保存到 GitHub</button>
-        <button onclick="loadFromGitHub()" style="background: #6c757d;">从 GitHub 加载</button>
+
+    <div class="form-grid" style="background: #f8fafc; padding: 20px; border-radius: 16px; margin: 20px 0;">
+        <div class="field">
+            <label>🔑 GitHub Token</label>
+            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        </div>
+        <div class="field">
+            <label>📦 仓库所有者</label>
+            <input type="text" id="repoOwner" placeholder="你的用户名">
+        </div>
+        <div class="field">
+            <label>📁 仓库名称</label>
+            <input type="text" id="repoName" placeholder="repo-name">
+        </div>
+        <div class="field">
+            <label>🌿 分支</label>
+            <input type="text" id="repoBranch" placeholder="main" value="main">
+        </div>
     </div>
-    
-    <div id="status"></div>
-    
-    <h3>📊 当前数据</h3>
-    <table id="dataTable">
-        <thead>
-            <tr><th>姓名</th><th>年龄</th><th>邮箱</th></tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
-    
-    <script>
-    let records = [];
-    
-    async function saveToGitHub() {
-        const token = document.getElementById('token').value;
-        const owner = document.getElementById('owner').value;
-        const repo = document.getElementById('repo').value;
-        const branch = document.getElementById('branch').value;
-        
-        if (!token || !owner || !repo) {
-            showStatus('请填写所有 GitHub 配置', 'error');
-            return false;
-        }
-        
-        // 验证 token 格式
-        if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
-            showStatus('Token 格式不正确，应该以 ghp_ 或 github_pat_ 开头', 'error');
-            return false;
-        }
-        
-        showStatus('正在保存到 GitHub...', 'warning');
+
+    <!-- 数据输入表单 -->
+    <h3>➕ 添加新记录</h3>
+    <div class="form-grid">
+        <div class="field">
+            <label>👤 姓名</label>
+            <input type="text" id="inputName" placeholder="张三">
+        </div>
+        <div class="field">
+            <label>🔢 年龄</label>
+            <input type="number" id="inputAge" placeholder="25">
+        </div>
+        <div class="field">
+            <label>📧 邮箱</label>
+            <input type="email" id="inputEmail" placeholder="zhangsan@example.com">
+        </div>
+    </div>
+
+    <div class="button-group">
+        <button class="btn btn-primary" id="saveToGithubBtn">💾 保存到GitHub仓库</button>
+        <button class="btn btn-secondary" id="loadFromGithubBtn">🔄 从GitHub加载数据</button>
+        <button class="btn btn-secondary" id="exampleBtn">📋 填入示例</button>
+        <button class="btn btn-github" id="viewOnGithubBtn" target="_blank">🌐 在GitHub查看CSV</button>
+    </div>
+
+    <!-- 状态提示 -->
+    <div id="statusMessage" class="status"></div>
+
+    <!-- 数据表格 -->
+    <h3>📋 当前数据 (来自GitHub)</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>姓名</th><th>年龄</th><th>邮箱</th></tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="3" style="text-align: center; color: #999;">点击"从GitHub加载"获取数据</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="font-size: 0.85rem; color: #666; margin-top: 20px; text-align: center;">
+        💡 数据永久保存在GitHub仓库的 data.csv 文件中 | 支持多人协作，所有修改都可追溯
+    </div>
+</div>
+
+<script>
+class GitHubCSVManager {
+    constructor() {
+        this.records = [];
+        this.csvPath = 'data.csv';
+    }
+
+    // 从GitHub加载CSV文件
+    async loadFromGitHub(token, owner, repo, branch) {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${this.csvPath}?ref=${branch}`;
         
         try {
-            // 生成 CSV
-            const csv = generateCSV(records);
-            const content = btoa(unescape(encodeURIComponent(csv)));
-            
-            // 获取当前文件信息
-            const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data.csv?ref=${branch}`;
-            let sha = null;
-            
-            try {
-                const getRes = await fetch(fileUrl, {
-                    headers: { 'Authorization': `token ${token}` }
-                });
-                if (getRes.ok) {
-                    const fileData = await getRes.json();
-                    sha = fileData.sha;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
                 }
-            } catch (e) {}
+            });
+
+            if (response.status === 404) {
+                // 文件不存在，返回空数据
+                this.records = [];
+                return { success: true, data: [], message: '文件不存在，将创建新文件' };
+            }
+
+            if (!response.ok) {
+                throw new Error(`GitHub API错误: ${response.status}`);
+            }
+
+            const data = await response.json();
+            // 解码base64内容
+            const content = atob(data.content.replace(/\n/g, ''));
+            this.records = this.parseCSV(content);
             
-            // 上传文件
+            return { success: true, data: this.records, sha: data.sha };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    // 保存数据到GitHub
+    async saveToGitHub(token, owner, repo, branch, commitMessage = '更新数据') {
+        // 先获取当前文件信息（如果有的话）
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${this.csvPath}?ref=${branch}`;
+        
+        try {
+            // 尝试获取现有文件
+            const getResponse = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            let sha = null;
+            if (getResponse.ok) {
+                const existing = await getResponse.json();
+                sha = existing.sha;
+            }
+
+            // 生成CSV内容
+            const csvContent = this.generateCSV();
+            
+            // 准备上传
             const uploadData = {
-                message: `更新数据 (${new Date().toLocaleString()})`,
-                content: content,
+                message: commitMessage,
+                content: btoa(unescape(encodeURIComponent(csvContent))), // 支持中文
                 branch: branch
             };
-            if (sha) uploadData.sha = sha;
-            
-            const putRes = await fetch(fileUrl, {
+
+            if (sha) {
+                uploadData.sha = sha;
+            }
+
+            const putResponse = await fetch(url, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(uploadData)
             });
-            
-            if (!putRes.ok) {
-                const err = await putRes.json();
-                throw new Error(err.message);
+
+            if (!putResponse.ok) {
+                const error = await putResponse.json();
+                throw new Error(error.message || '上传失败');
             }
-            
-            showStatus('✅ 成功保存到 GitHub！', 'success');
-            return true;
-            
+
+            return { success: true, message: '成功保存到GitHub' };
         } catch (error) {
-            showStatus(`❌ 保存失败: ${error.message}`, 'error');
-            console.error(error);
-            return false;
+            return { success: false, error: error.message };
         }
     }
-    
-    async function loadFromGitHub() {
-        const token = document.getElementById('token').value;
-        const owner = document.getElementById('owner').value;
-        const repo = document.getElementById('repo').value;
-        const branch = document.getElementById('branch').value;
+
+    // 生成CSV
+    generateCSV() {
+        const headers = ['姓名', '年龄', '邮箱'];
+        let csv = headers.join(',') + '\n';
         
-        try {
-            showStatus('正在从 GitHub 加载...', 'warning');
-            
-            const url = `https://api.github.com/repos/${owner}/${repo}/contents/data.csv?ref=${branch}`;
-            const res = await fetch(url, {
-                headers: { 'Authorization': `token ${token}` }
-            });
-            
-            if (!res.ok) {
-                if (res.status === 404) {
-                    records = [];
-                    updateTable();
-                    showStatus('文件不存在，将创建新文件', 'warning');
-                    return;
-                }
-                throw new Error(`HTTP ${res.status}`);
-            }
-            
-            const data = await res.json();
-            const content = decodeURIComponent(escape(atob(data.content)));
-            
-            // 解析 CSV
-            records = parseCSV(content);
-            updateTable();
-            showStatus(`✅ 成功加载 ${records.length} 条记录`, 'success');
-            
-        } catch (error) {
-            showStatus(`❌ 加载失败: ${error.message}`, 'error');
-        }
-    }
-    
-    function generateCSV(records) {
-        let csv = '姓名,年龄,邮箱\n';
-        records.forEach(r => {
-            csv += `"${r.name || ''}","${r.age || ''}","${r.email || ''}"\n`;
+        this.records.forEach(record => {
+            const row = [
+                this.escapeCSV(record.name || ''),
+                this.escapeCSV(record.age || ''),
+                this.escapeCSV(record.email || '')
+            ];
+            csv += row.join(',') + '\n';
         });
+        
         return csv;
     }
-    
-    function parseCSV(csv) {
-        const lines = csv.split('\n').filter(l => l.trim());
+
+    // 解析CSV
+    parseCSV(csvText) {
+        const lines = csvText.split('\n').filter(line => line.trim());
         if (lines.length <= 1) return [];
-        
+
         const records = [];
         for (let i = 1; i < lines.length; i++) {
             const fields = lines[i].split(',').map(f => 
-                f.replace(/^"|"$/g, '').trim()
+                f.replace(/^"|"$/g, '').replace(/""/g, '"')
             );
             if (fields.length >= 3) {
                 records.push({
@@ -187,49 +395,182 @@
         }
         return records;
     }
-    
-    function addAndSave() {
-        const name = document.getElementById('name').value.trim();
-        const age = document.getElementById('age').value.trim();
-        const email = document.getElementById('email').value.trim();
-        
-        if (!name || !age || !email) {
-            showStatus('请填写完整信息', 'error');
-            return;
+
+    escapeCSV(field) {
+        if (!field) return '""';
+        const str = String(field);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
         }
-        
-        records.push({ name, age, email });
+        return `"${str}"`;
+    }
+
+    addRecord(name, age, email) {
+        this.records.push({ name, age, email });
+    }
+
+    getRecords() {
+        return this.records;
+    }
+
+    clearRecords() {
+        this.records = [];
+    }
+}
+
+// 页面初始化
+const manager = new GitHubCSVManager();
+const statusDiv = document.getElementById('statusMessage');
+const tableBody = document.getElementById('tableBody');
+
+function updateTable() {
+    const records = manager.getRecords();
+    if (records.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">暂无数据</td></tr>';
+        return;
+    }
+
+    let html = '';
+    records.forEach(record => {
+        html += `<tr>
+            <td>${escapeHtml(record.name)}</td>
+            <td>${escapeHtml(record.age)}</td>
+            <td>${escapeHtml(record.email)}</td>
+        </tr>`;
+    });
+    tableBody.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showStatus(message, type) {
+    statusDiv.className = `status ${type}`;
+    statusDiv.textContent = message;
+    setTimeout(() => {
+        statusDiv.className = 'status';
+    }, 5000);
+}
+
+// 事件监听
+document.getElementById('saveToGithubBtn').addEventListener('click', async () => {
+    const token = document.getElementById('githubToken').value;
+    const owner = document.getElementById('repoOwner').value;
+    const repo = document.getElementById('repoName').value;
+    const branch = document.getElementById('repoBranch').value;
+
+    if (!token || !owner || !repo) {
+        showStatus('请填写完整的GitHub配置信息', 'error');
+        return;
+    }
+
+    const name = document.getElementById('inputName').value.trim();
+    const age = document.getElementById('inputAge').value.trim();
+    const email = document.getElementById('inputEmail').value.trim();
+
+    if (!name || !age || !email) {
+        showStatus('请填写完整的记录信息', 'error');
+        return;
+    }
+
+    // 添加到内存
+    manager.addRecord(name, age, email);
+    
+    // 保存到GitHub
+    showStatus('正在保存到GitHub...', 'loading');
+    const result = await manager.saveToGitHub(token, owner, repo, branch, `添加记录: ${name}`);
+    
+    if (result.success) {
+        showStatus('✅ 成功保存到GitHub仓库', 'success');
         updateTable();
-        
-        // 清空输入
-        document.getElementById('name').value = '';
-        document.getElementById('age').value = '';
-        document.getElementById('email').value = '';
-        
-        // 自动保存到 GitHub
-        saveToGitHub();
+        // 清空输入框
+        document.getElementById('inputName').value = '';
+        document.getElementById('inputAge').value = '';
+        document.getElementById('inputEmail').value = '';
+    } else {
+        showStatus(`❌ 保存失败: ${result.error}`, 'error');
     }
+});
+
+document.getElementById('loadFromGithubBtn').addEventListener('click', async () => {
+    const token = document.getElementById('githubToken').value;
+    const owner = document.getElementById('repoOwner').value;
+    const repo = document.getElementById('repoName').value;
+    const branch = document.getElementById('repoBranch').value;
+
+    if (!token || !owner || !repo) {
+        showStatus('请填写完整的GitHub配置信息', 'error');
+        return;
+    }
+
+    showStatus('正在从GitHub加载数据...', 'loading');
+    const result = await manager.loadFromGitHub(token, owner, repo, branch);
     
-    function updateTable() {
-        const tbody = document.getElementById('tableBody');
-        if (records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">暂无数据</td></tr>';
-            return;
-        }
-        
-        let html = '';
-        records.forEach(r => {
-            html += `<tr><td>${r.name}</td><td>${r.age}</td><td>${r.email}</td></tr>`;
-        });
-        tbody.innerHTML = html;
+    if (result.success) {
+        showStatus(`✅ 成功加载 ${manager.getRecords().length} 条记录`, 'success');
+        updateTable();
+    } else {
+        showStatus(`❌ 加载失败: ${result.error}`, 'error');
     }
+});
+
+document.getElementById('exampleBtn').addEventListener('click', () => {
+    const examples = [
+        { name: '张三', age: '28', email: 'zhangsan@example.com' },
+        { name: '李四', age: '32', email: 'lisi@company.com' },
+        { name: '王五', age: '25', email: 'wangwu@school.edu' }
+    ];
+    const rand = examples[Math.floor(Math.random() * examples.length)];
+    document.getElementById('inputName').value = rand.name;
+    document.getElementById('inputAge').value = rand.age;
+    document.getElementById('inputEmail').value = rand.email;
+});
+
+document.getElementById('viewOnGithubBtn').addEventListener('click', () => {
+    const owner = document.getElementById('repoOwner').value;
+    const repo = document.getElementById('repoName').value;
+    const branch = document.getElementById('repoBranch').value;
     
-    function showStatus(msg, type) {
-        const div = document.getElementById('status');
-        div.className = type;
-        div.innerHTML = msg;
-        setTimeout(() => div.innerHTML = '', 5000);
+    if (owner && repo) {
+        window.open(`https://github.com/${owner}/${repo}/blob/${branch}/data.csv`, '_blank');
+    } else {
+        showStatus('请先填写仓库信息', 'error');
     }
-    </script>
+});
+
+// 可选：保存配置到localStorage
+function saveConfig() {
+    const config = {
+        owner: document.getElementById('repoOwner').value,
+        repo: document.getElementById('repoName').value,
+        branch: document.getElementById('repoBranch').value
+    };
+    localStorage.setItem('github_config', JSON.stringify(config));
+}
+
+function loadConfig() {
+    const saved = localStorage.getItem('github_config');
+    if (saved) {
+        try {
+            const config = JSON.parse(saved);
+            document.getElementById('repoOwner').value = config.owner || '';
+            document.getElementById('repoName').value = config.repo || '';
+            document.getElementById('repoBranch').value = config.branch || 'main';
+        } catch (e) {}
+    }
+}
+
+// 加载保存的配置
+loadConfig();
+
+// 配置变更时保存
+document.getElementById('repoOwner').addEventListener('change', saveConfig);
+document.getElementById('repoName').addEventListener('change', saveConfig);
+document.getElementById('repoBranch').addEventListener('change', saveConfig);
+</script>
 </body>
 </html>
