@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单动态 · 轻拂页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #d9e2ef 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            padding: 1rem;
+            transition: background 0.2s ease;
+        }
+
+        /* 动态卡片 */
+        .dynamic-card {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 2.5rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 30px 50px rgba(0, 15, 30, 0.2),
+                        0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+                        0 10px 20px -10px rgba(0, 30, 60, 0.3);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: box-shadow 0.3s, background-color 0.3s;
+        }
+
+        /* 动态标题区 */
+        .greeting {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .greeting h1 {
+            font-size: 2.6rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #1d2b3e, #2c3f5c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1.2;
+        }
+
+        .live-badge {
+            background: #d1ddeb;
+            color: #1e2e44;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid #ffffffaa;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            backdrop-filter: blur(4px);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .live-badge::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            background: #44dd88;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #44dd88;
+            animation: pulse-green 1.8s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.15); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* 时间板块 */
+        .time-panel {
+            background: #ffffffb8;
+            border-radius: 2rem;
+            padding: 1.6rem 2rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid #ffffff;
+            box-shadow: 0 8px 18px -8px rgba(0,32,64,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+        }
+
+        .time-place {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .clock-icon {
+            font-size: 2.4rem;
+            line-height: 1;
+            filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.1));
+        }
+
+        .digital {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 2.1rem;
+            font-weight: 500;
+            background: #1f2c3c;
+            color: #b7e4fa;
+            padding: 0.3rem 1.2rem;
+            border-radius: 60px;
+            letter-spacing: 2px;
+            box-shadow: inset 0 -2px 0 #3f556b;
+            border: 1px solid #5d7a9a;
+            word-break: keep-all;
+        }
+
+        .date-tag {
+            background: #eef3fc;
+            padding: 0.5rem 1.3rem;
+            border-radius: 40px;
+            color: #1d394e;
+            font-weight: 500;
+            font-size: 1.2rem;
+            border: 1px solid white;
+            box-shadow: 0 2px 6px #cad5e3;
+        }
+
+        /* 鼠标互动区 — 动态反馈 */
+        .surprise-zone {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 1.8rem;
+            padding: 1.5rem;
+            margin-bottom: 2.3rem;
+            border: 2px dashed #9bb0c9;
+            transition: background-color 0.2s, border-color 0.2s;
+            cursor: crosshair;
+            text-align: center;
+        }
+
+        .surprise-zone p {
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #2a4059;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 0.6rem;
+        }
+
+        .mouse-coord {
+            font-family: monospace;
+            background: #273d54;
+            color: #e8f0fe;
+            padding: 0.3rem 1rem;
+            border-radius: 24px;
+            font-size: 1.1rem;
+            display: inline-block;
+            border: 1px solid #6282a3;
+        }
+
+        .fun-message {
+            margin-top: 0.9rem;
+            font-size: 1.2rem;
+            font-style: italic;
+            color: #1f3b4e;
+            transition: all 0.2s;
+            background: #ffffffb0;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            display: inline-block;
+            backdrop-filter: blur(4px);
+        }
+
+        /* 动态工具条 */
+        .toolbar {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.2rem;
+        }
+
+        .dyn-btn {
+            background: #ffffffdb;
+            border: none;
+            border-radius: 60px;
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 550;
+            color: #1a3046;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0, 20, 40, 0.15), 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid #ffffff;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dyn-btn:hover {
+            background: white;
+            box-shadow: 0 10px 22px -6px #1e3f60a0;
+            transform: translateY(-2px);
+            border-color: #b7d0ea;
+        }
+
+        .dyn-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .color-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: conic-gradient(#f09, #fc6, #3cf, #a8e);
+        }
+
+        footer {
+            margin-top: 2.2rem;
+            text-align: center;
+            font-size: 0.95rem;
+            color: #466482;
+            border-top: 1px solid #d0deee;
+            padding-top: 1.5rem;
+        }
+    </style>
+</head>
+<body id="mainBody">
+
+<div class="dynamic-card" id="dynamicCard">
+    
+    <!-- 问候 & 动态标记 -->
+    <div class="greeting">
+        <h1>⏳ 轻拂页 · 瞬息</h1>
+        <span class="live-badge">动态交互中</span>
+    </div>
+
+    <!-- 动态时间 (每秒更新) -->
+    <div class="time-panel">
+        <div class="time-place">
+            <span class="clock-icon">🕒</span>
+            <span class="digital" id="liveClock">--:--:--</span>
+        </div>
+        <div class="date-tag" id="liveDate">----年--月--日</div>
+    </div>
+
+    <!-- 鼠标移动动态区域 (坐标+趣味信息) -->
+    <div class="surprise-zone" id="mouseZone">
+        <p>
+            <span>🖱️ 在此区域内移动鼠标</span>
+            <span class="mouse-coord" id="coordDisplay">x: 0, y: 0</span>
+        </p>
+        <div class="fun-message" id="dynamicMessage">
+            把鼠标滑进来 🧚
+        </div>
+    </div>
+
+    <!-- 按钮交互: 切换卡片主色 / 重置动态消息 -->
+    <div class="toolbar">
+        <button class="dyn-btn" id="colorToggleBtn">
+            <span class="color-dot"></span> 一键换肤·动态
+        </button>
+        <button class="dyn-btn" id="resetMsgBtn">
+            ✨ 重置消息
+        </button>
+    </div>
+
+    <footer>
+        ⚡ 每一次移动、每一秒 · 都有回响
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // 获取元素
+        const clockEl = document.getElementById('liveClock');
+        const dateEl = document.getElementById('liveDate');
+        const coordEl = document.getElementById('coordDisplay');
+        const msgEl = document.getElementById('dynamicMessage');
+        const mouseZone = document.getElementById('mouseZone');
+        const colorBtn = document.getElementById('colorToggleBtn');
+        const resetBtn = document.getElementById('resetMsgBtn');
+        const body = document.getElementById('mainBody');
+        const card = document.getElementById('dynamicCard');
+
+        // ========== 1. 实时时钟 (动态秒更新) ==========
+        function updateDateTime() {
+            const now = new Date();
+            
+            // 时间 HH:MM:SS (补零)
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // 日期: 2025年03月10日 周一 (灵活显示)
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const weekday = weekdays[now.getDay()];
+            dateEl.textContent = `${year}年${month}月${day}日 ${weekday}`;
+        }
+        // 立即执行并每秒刷新
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // ========== 2. 鼠标移动动态 (坐标 + 趣味消息) ==========
+        // 预置俏皮话数组
+        const messages = [
+            "✨ 划过一道魔法轨迹",
+            "🪄 指针在这里跳舞",
+            "🍃 轻拂过页面",
+            "🧠 动态感知区域",
+            "⭐ 你发现了彩蛋",
+            "🌈 坐标变换中",
+            "🎈 再靠近一点点",
+            "💫 鼠标精灵出没"
+        ];
+
+        // 上次随机索引，避免连续相同 (可选)
+        let lastMsgIndex = -1;
+
+        function handleMouseMove(e) {
+            // 获取相对于 mouseZone 的坐标
+            const rect = mouseZone.getBoundingClientRect();
+            const x = Math.round(e.clientX - rect.left);
+            const y = Math.round(e.clientY - rect.top);
+            
+            // 边界保护：确保坐标在区域内显示友好 (即使移出区域边缘也显示大致)
+            coordEl.textContent = `x: ${x}, y: ${y}`;
+
+            // 根据坐标位置生成趣味动态消息 (随机但偶尔变化)
+            // 为了流畅，降低随机频率：每移动一次有 30% 概率更换消息，或用 throttle，但简单每移动都随机略浪费，但无妨
+            // 但为了不过于闪烁，仅当移动步长较大或随机概率，这里采用随机+范围，让每次移动都有机会变化但保留趣味
+            if (Math.random() < 0.25) {  // 25%概率变化，保持新鲜感但不至于闪瞎
+                let randomIndex = Math.floor(Math.random() * messages.length);
+                // 简单避免和上一条完全一样 (可选)
+                while (randomIndex === lastMsgIndex && messages.length > 1) {
+                    randomIndex = Math.floor(Math.random() * messages.length);
+                }
+                msgEl.textContent = messages[randomIndex];
+                lastMsgIndex = randomIndex;
+            }
+
+            // 额外彩蛋：根据x/y位置轻微改变背景色调 (仅仅给zone一点动态反馈)
+            // 使用 HSL 微调，非常 subtle
+            const hue = (x * 0.3 + y * 0.2) % 360; // 简单的数值映射
+            mouseZone.style.backgroundColor = `hsla(${hue}, 30%, 85%, 0.6)`;
+        }
+
+        // 防抖/节流？不用，直接使用 throttle 但为了流畅使用requestAnimationFrame优化
+        let ticking = false;
+        mouseZone.addEventListener('mousemove', (e) => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    handleMouseMove(e);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+
+        // 离开区域时恢复初始消息和背景 (也可以保留最后一次)
+        mouseZone.addEventListener('mouseleave', () => {
+            msgEl.textContent = '🕊️ 离开了一会儿';
+            mouseZone.style.backgroundColor = ''; // 恢复默认 rgba(255,255,255,0.5)
+            coordEl.textContent = 'x: --, y: --';
+            // 重置lastMsgIndex无关紧要
+        });
+
+        mouseZone.addEventListener('mouseenter', () => {
+            msgEl.textContent = '🐾 回来啦，再玩玩';
+            // 可选重置坐标区域
+        });
+
+        // ========== 3. 按钮动态: 切换背景/卡片色 ==========
+        function getRandomPastel() {
+            const hue = Math.floor(Math.random() * 360);
+            // 柔和色系: 饱和度30%, 明度85% ~ 95%
+            return `hsl(${hue}, 35%, 88%)`;
+        }
+
+        colorBtn.addEventListener('click', () => {
+            // 改变 body 背景 (渐变中两个颜色)
+            const col1 = getRandomPastel();
+            const col2 = getRandomPastel();
+            body.style.background = `linear-gradient(145deg, ${col1}, ${col2})`;
+            
+            // 同时也给卡片一点动态边框色
+            card.style.boxShadow = `0 30px 50px rgba(0, 15, 30, 0.2), 0 0 0 2px ${col2} inset, 0 10px 20px -10px rgba(0, 30, 60, 0.3)`;
+            
+            // 改变 badge 或者趣味文本 (简单改一下)
+            msgEl.textContent = '🌈 颜色焕然一新';
+            // 重置lastMsgIndex防止下次覆盖
+            lastMsgIndex = -1;
+        });
+
+        // ========== 4. 重置消息 (同时重置背景到初始) ==========
+        resetBtn.addEventListener('click', () => {
+            // 恢复初始背景 (与css一致)
+            body.style.background = 'linear-gradient(145deg, #f0f4fa 0%, #d9e2ef 100%)';
+            // 恢复卡片默认阴影 (去掉内嵌色)
+            card.style.boxShadow = '0 30px 50px rgba(0, 15, 30, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset, 0 10px 20px -10px rgba(0, 30, 60, 0.3)';
+            
+            // 重置消息到初始
+            msgEl.textContent = '把鼠标滑进来 🧚';
+            // 重置鼠标区域背景
+            mouseZone.style.backgroundColor = '';
+            // 坐标变成默认 (也可不清零，但mouseleave风格)
+            coordEl.textContent = 'x: 0, y: 0';
+            // 同时时间日期不变（本来就是活的）
+            // 让lastMsgIndex失效
+            lastMsgIndex = -1;
+        });
+
+        // ========== 额外细节: 窗口加载完毕微调一下卡片日期格式 (已经显示) ==========
+        // 可选: 增加一个微小的秒的脉冲效果 (已经在live-badge用绿色点表示)
+
+        // 为了增加一点“动态”加载感，控制台友好提示
+        console.log('✨ 简单动态网页已启动 — 时间、鼠标、主题都是活的');
+    })();
+</script>
+</body>
+</html>
